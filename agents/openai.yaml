@@ -1,0 +1,14 @@
+interface:
+  display_name: Technical Design Standardizer
+  short_description: Standarkan dan review logic Technical Design
+  default_prompt: Use $technical-design-standardizer to standardize and review this
+    Technical Design.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
