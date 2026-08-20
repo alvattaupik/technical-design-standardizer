@@ -26,6 +26,40 @@ Gunakan template ini untuk endpoint HTTP REST yang memproses request secara sink
 | --- | --- | --- | --- |
 | 1.0.0 | `<YYYY-MM-DD>` | System Analyst | Initial creation |
 
+---
+
+## Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant user as Calon Merchant ETB (Existing To Bank)
+    participant fe as Front-End
+    participant gateway as API Gateway
+    participant service as Onboarding Service
+    participant kafka as Kafka (OTP Topic)
+
+    user->>fe: Input data
+    fe->>gateway: Request API
+    gateway->>service: Teruskan Request
+    
+    activate service
+    service->>service: Validasi request
+    
+    alt Format Tidak Valid [AF-01]
+        service-->>gateway: Error 400
+        gateway-->>fe: Error 400
+        fe-->>user: Tampilkan error
+    else Valid
+        service->>kafka: Publish Event
+        service-->>gateway: Respons Sukses + Data
+        deactivate service
+        gateway-->>fe: Respons Sukses
+        fe-->>user: Tampilkan Hasil
+    end
+```
+
+---
+
 ## HTTP Contract
 
 ### Request
@@ -33,16 +67,10 @@ Gunakan template ini untuk endpoint HTTP REST yang memproses request secara sink
 #### Request Header
 
 | No | Key | Type | M/O/C | Description |
-| --- | --- | --- | --- | --- |
-| 1 | `Content-Type` | String | M | Wajib `application/json`. |
-| 2 | `X-TIMESTAMP` | String | M | Waktu request dalam format ISO8601 `YYYY-MM-DDThh:mm:ssTZD`. |
-| 3 | `ORIGIN` | String | O | Origin frontend. |
-| 4 | `X-IP-ADDRESS` | String | M | Alamat IP publik klien. |
-| 5 | `X-DEVICE-ID` | String | M | Browser fingerprint atau device ID. |
-| 6 | `X-LATITUDE` | String | M | Latitude klien. |
-| 7 | `X-LONGITUDE` | String | M | Longitude klien. |
-| 8 | `CHANNEL-ID` | String | M | Kanal transaksi. Contoh: `WEB`. |
-| 9 | `traceId` | String | M | ID unik untuk tracing request. |
+|----|-----|------|-------|-------------|
+| 1 | **`Content-Type`** | String | M | Wajib: `application/json` |
+| 2 | **`X-TIMESTAMP`** | String | M | Waktu request sesuai standar ISO8601. Format: `YYYY-MM-DDThh:mm:ssTZD` |
+| 3 | **`traceId`** | String | M | Kode unik tracing request. |
 
 #### Request Body
 

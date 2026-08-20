@@ -26,22 +26,47 @@ Gunakan template ini untuk endpoint HTTP REST yang menerima request, menjalankan
 | --- | --- | --- | --- |
 | 1.0.0 | `<YYYY-MM-DD>` | System Analyst | Initial creation |
 
+---
+
+## Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant user as Calon Merchant ETB (Existing To Bank)
+    participant fe as Front-End
+    participant gateway as API Gateway
+    participant service as Onboarding Service
+
+    user->>fe: Input data
+    fe->>gateway: Request API
+    gateway->>service: Teruskan Request
+    
+    activate service
+    service->>service: Validasi request
+    
+    alt Format Tidak Valid [AF-01]
+        service-->>gateway: Error 400
+        gateway-->>fe: Error 400
+        fe-->>user: Tampilkan error
+    else Valid
+        service-->>gateway: Respons Sukses + Data
+        deactivate service
+        gateway-->>fe: Respons Sukses
+        fe-->>user: Tampilkan Hasil
+    end
+```
+
+---
+
 ## HTTP REST Contract
 
 ### Request Header
 
 | No | Key | Type | M/O/C | Description |
-| ---: | --- | --- | :---: | --- |
-| 1 | `Content-Type` | String | M | Wajib `application/json`. |
-| 2 | `X-TIMESTAMP` | String | M | Waktu request dalam ISO8601 `YYYY-MM-DDThh:mm:ssTZD`. |
-| 3 | `ORIGIN` | String | O | Origin frontend jika relevan. |
-| 4 | `X-IP-ADDRESS` | String | C | Alamat IP klien jika diwajibkan kontrak. |
-| 5 | `X-DEVICE-ID` | String | C | Browser fingerprint atau device ID jika diwajibkan. |
-| 6 | `X-LATITUDE` | String | C | Latitude jika endpoint membutuhkan informasi lokasi. |
-| 7 | `X-LONGITUDE` | String | C | Longitude jika endpoint membutuhkan informasi lokasi. |
-| 8 | `CHANNEL-ID` | String | C | Kanal transaksi. Contoh: `WEB`. |
-| 9 | `traceId` | String | M | ID unik untuk korelasi request dan log. |
-| 10 | `Authorization` | String | C | Credential/token sesuai mekanisme autentikasi service. |
+|----|-----|------|-------|-------------|
+| 1 | **`Content-Type`** | String | M | Wajib: `application/json` |
+| 2 | **`X-TIMESTAMP`** | String | M | Waktu request sesuai standar ISO8601. Format: `YYYY-MM-DDThh:mm:ssTZD` |
+| 3 | **`traceId`** | String | M | Kode unik tracing request. |
 
 ### Request Body
 
@@ -293,12 +318,4 @@ Semua log aplikasi dipublikasikan secara asinkron ke Kafka Topic `hibank.qris.ap
 | 8 | Tracker dan logging tidak mengekspos data sensitif | |
 | 9 | Failure pada dependency memiliki mapping response yang jelas | |
 | 10 | Tidak ada Kafka Consumer, Kafka Publisher, atau webhook jika arsitektur memang API murni | |
-
-## Open Points
-
-Gunakan bagian ini hanya untuk konflik atau keputusan yang belum dapat dipastikan dari sumber.
-
-| No | Open Point | Dampak | Pihak Konfirmasi |
-| ---: | --- | --- | --- |
-| 1 | `<PERTANYAAN_SPESIFIK>` | `<DAMPAK_IMPLEMENTASI>` | `<OWNER/ARCHITECT/SECURITY/DBA>` |
 

@@ -27,6 +27,40 @@ Gunakan template ini untuk service yang menerima proses melalui HTTP REST atau K
 | --- | --- | --- | --- |
 | 1.0.0 | `<YYYY-MM-DD>` | System Analyst | Initial creation |
 
+---
+
+## Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant user as Calon Merchant ETB (Existing To Bank)
+    participant fe as Front-End
+    participant gateway as API Gateway
+    participant service as Onboarding Service
+    participant kafka as Kafka Topic
+
+    user->>fe: Input data
+    fe->>gateway: Request API
+    gateway->>service: Teruskan Request
+    
+    activate service
+    service->>service: Validasi request
+    
+    alt Format Tidak Valid [AF-01]
+        service-->>gateway: Error 400
+        gateway-->>fe: Error 400
+        fe-->>user: Tampilkan error
+    else Valid
+        service->>kafka: Publish Event
+        service-->>gateway: Respons Sukses + Data
+        deactivate service
+        gateway-->>fe: Respons Sukses
+        fe-->>user: Tampilkan Hasil
+    end
+```
+
+---
+
 ## Entry Point
 
 Service menerima business request melalui salah satu entry point berikut.
@@ -43,16 +77,10 @@ Kedua entry point dipetakan ke business payload yang sama sebelum menjalankan pr
 ### Request Header
 
 | No | Key | Type | M/O/C | Description |
-| ---: | --- | --- | :---: | --- |
-| 1 | `Content-Type` | String | M | Wajib `application/json`. |
-| 2 | `X-TIMESTAMP` | String | M | Waktu request dalam format ISO8601 `YYYY-MM-DDThh:mm:ssTZD`. |
-| 3 | `ORIGIN` | String | O | Origin frontend. |
-| 4 | `X-IP-ADDRESS` | String | M | Alamat IP publik klien. |
-| 5 | `X-DEVICE-ID` | String | M | Browser fingerprint atau device ID. |
-| 6 | `X-LATITUDE` | String | M | Latitude klien. |
-| 7 | `X-LONGITUDE` | String | M | Longitude klien. |
-| 8 | `CHANNEL-ID` | String | M | Identifier kanal transaksi. |
-| 9 | `traceId` | String | M | ID unik untuk tracing request. |
+|----|-----|------|-------|-------------|
+| 1 | **`Content-Type`** | String | M | Wajib: `application/json` |
+| 2 | **`X-TIMESTAMP`** | String | M | Waktu request sesuai standar ISO8601. Format: `YYYY-MM-DDThh:mm:ssTZD` |
+| 3 | **`traceId`** | String | M | Kode unik tracing request. |
 
 ### Request Body
 
@@ -523,15 +551,4 @@ Semua log aplikasi dipublikasikan secara asinkron ke Kafka Topic `hibank.qris.ap
 | 4 | Publisher trigger dievaluasi | | |
 | 5 | Event dipublikasikan jika kondisi terpenuhi | | |
 | 6 | Consumer offset di-commit | | |
-
-## Open Points
-
-Gunakan bagian ini hanya untuk kontrak yang belum final.
-
-| Item | Status | Keputusan yang Dibutuhkan |
-| --- | --- | --- |
-| API path | Open | Pastikan General Information dan contoh HTTP request memakai path yang sama. |
-| Publisher trigger | Open | Pastikan kombinasi field dan value pemicu publish sesuai business flow. |
-| Kafka publish failure via REST | Open | Tentukan apakah request gagal, memakai outbox, atau memakai recovery lain saat publish gagal. |
-| Consumer invalid payload | Open | Tentukan apakah langsung commit, retry, atau kirim ke DLT. |
 
